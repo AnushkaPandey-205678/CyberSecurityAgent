@@ -38,10 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
-    'news',
-    'api',
-    'cybernews',
-    'dashboard'
+    'news'
 ]
 
 MIDDLEWARE = [
