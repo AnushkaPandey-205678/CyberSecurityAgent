@@ -1,77 +1,360 @@
-# core/views.py
-
-from rest_framework import generics
-from rest_framework.filters import SearchFilter, OrderingFilter
-from .models import NewsItem
-from .serializers import NewsItemSerializer
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework import status
-from .ai_processor import process_unprocessed_news, reprocess_news_item
-from .models import NewsItem
-from .serializers import NewsItemSerializer 
-from .scraper import run_scraper, save_to_db
+from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
 from datetime import timedelta
 from django.db import connection
+from django.db.models import Q
 
-class ProcessedNewsListAPIView(generics.ListAPIView):
-    serializer_class = NewsItemSerializer
-    filter_backends = [SearchFilter, OrderingFilter]
+from .models import NewsItem
+from .serializers import NewsItemSerializer
+from .ai_processor import (
+    process_unprocessed_news, 
+    reprocess_news_item,
+    process_high_priority_first,
+    clear_content_cache
+)
+from .scraper import run_scraper, save_to_db
 
-    # allow searching in title / summary
-    search_fields = ['title', 'summary', 'ai_summary']
 
-    # allow sorting by risk_score, priority, created_at
-    ordering_fields = ['risk_score', 'priority', 'created_at']
+# Custom pagination
+class NewsItemPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
-    def get_queryset(self):
-        return NewsItem.objects.filter(processed_by_llm=True).order_by('-risk_score')
 
-class NewsDetailAPIView(generics.RetrieveAPIView):
-    queryset = NewsItem.objects.all()
-    serializer_class = NewsItemSerializer
-    lookup_field = "id"
+@api_view(['GET'])
+def processed_news_list(request):
+    """
+    GET /api/news/processed/
     
+    Query params:
+    - priority: filter by priority (1-10)
+    - risk_level: filter by risk (critical/high/medium/low)
+    - search: search in title, summary, ai_summary
+    - ordering: sort by field (risk_score, priority, created_at)
+    - min_priority: minimum priority (e.g., 5 for high priority only)
+    - page: page number
+    - page_size: items per page (default: 20)
+    """
+    try:
+        # Start with processed news
+        queryset = NewsItem.objects.filter(processed_by_llm=True)
+        
+        # Filter by priority
+        priority = request.query_params.get('priority')
+        if priority:
+            queryset = queryset.filter(priority=int(priority))
+        
+        # Filter by minimum priority
+        min_priority = request.query_params.get('min_priority')
+        if min_priority:
+            queryset = queryset.filter(priority__gte=int(min_priority))
+        
+        # Filter by risk level
+        risk_level = request.query_params.get('risk_level')
+        if risk_level:
+            queryset = queryset.filter(risk_level=risk_level.lower())
+        
+        # Search functionality
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(summary__icontains=search) |
+                Q(ai_summary__icontains=search)
+            )
+        
+        # Ordering (default: -risk_score, -priority)
+        ordering = request.query_params.get('ordering', '-risk_score,-priority')
+        ordering_fields = [field.strip() for field in ordering.split(',')]
+        queryset = queryset.order_by(*ordering_fields)
+        
+        # Pagination
+        paginator = NewsItemPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        
+        if page is not None:
+            serializer = NewsItemSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        # Fallback without pagination
+        serializer = NewsItemSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def all_news_list(request):
+    """
+    GET /api/news/all/
+    
+    Query params:
+    - priority: filter by priority
+    - min_priority: minimum priority
+    - processed: true/false (filter by processing status)
+    - search: search in title, summary
+    - ordering: sort by field (default: -created_at)
+    """
+    try:
+        queryset = NewsItem.objects.all()
+        
+        # Filter by priority
+        priority = request.query_params.get('priority')
+        if priority:
+            queryset = queryset.filter(priority=int(priority))
+        
+        # Filter by minimum priority
+        min_priority = request.query_params.get('min_priority')
+        if min_priority:
+            queryset = queryset.filter(priority__gte=int(min_priority))
+        
+        # Filter by processed status
+        processed = request.query_params.get('processed')
+        if processed:
+            is_processed = processed.lower() == 'true'
+            queryset = queryset.filter(processed_by_llm=is_processed)
+        
+        # Search
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(summary__icontains=search)
+            )
+        
+        # Ordering
+        ordering = request.query_params.get('ordering', '-created_at')
+        ordering_fields = [field.strip() for field in ordering.split(',')]
+        queryset = queryset.order_by(*ordering_fields)
+        
+        # Pagination
+        paginator = NewsItemPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        
+        if page is not None:
+            serializer = NewsItemSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = NewsItemSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def high_priority_news_list(request):
+    """
+    GET /api/news/high-priority/
+    
+    Get only high priority news (priority >= 5)
+    Ordered by: priority DESC, risk_score DESC, created_at DESC
+    """
+    try:
+        queryset = NewsItem.objects.filter(
+            processed_by_llm=True,
+            priority__gte=5
+        ).order_by('-priority', '-risk_score', '-created_at')
+        
+        # Search
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(ai_summary__icontains=search)
+            )
+        
+        # Risk level filter
+        risk_level = request.query_params.get('risk_level')
+        if risk_level:
+            queryset = queryset.filter(risk_level=risk_level.lower())
+        
+        # Pagination
+        paginator = NewsItemPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        
+        if page is not None:
+            serializer = NewsItemSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = NewsItemSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def critical_news_list(request):
+    """
+    GET /api/news/critical/
+    
+    Get only critical risk level news
+    """
+    try:
+        queryset = NewsItem.objects.filter(
+            processed_by_llm=True,
+            risk_level='critical'
+        ).order_by('-risk_score', '-created_at')
+        
+        paginator = NewsItemPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        
+        if page is not None:
+            serializer = NewsItemSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = NewsItemSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def news_by_priority(request, priority_level):
+    """
+    GET /api/news/priority/{priority_level}/
+    
+    Get news filtered by specific priority level (1-10)
+    """
+    try:
+        queryset = NewsItem.objects.filter(
+            priority=priority_level
+        ).order_by('-risk_score', '-created_at')
+        
+        paginator = NewsItemPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        
+        if page is not None:
+            serializer = NewsItemSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = NewsItemSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def news_detail(request, pk):
+    """
+    GET /api/news/{id}/
+    
+    Get single news item details
+    """
+    try:
+        news_item = NewsItem.objects.get(pk=pk)
+        serializer = NewsItemSerializer(news_item)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except NewsItem.DoesNotExist:
+        return Response({
+            'error': 'News item not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['PATCH'])
+def update_news_priority(request, pk):
+    """
+    POST /api/news/{id}/update-priority/
+    
+    Body: {"priority": 8}
+    """
+    try:
+        news_item = NewsItem.objects.get(pk=pk)
+        priority = request.data.get('priority')
+        
+        if priority is None:
+            return Response({
+                'error': 'Priority value is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        priority = int(priority)
+        if priority < 1 or priority > 10:
+            return Response({
+                'error': 'Priority must be between 1 and 10'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        news_item.priority = priority
+        news_item.save()
+        
+        serializer = NewsItemSerializer(news_item)
+        return Response({
+            'message': 'Priority updated successfully',
+            'data': serializer.data
+        }, status=status.HTTP_200_OK)
+        
+    except NewsItem.DoesNotExist:
+        return Response({
+            'error': 'News item not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except ValueError:
+        return Response({
+            'error': 'Invalid priority value'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(['POST'])
 def run_scraper_view(request):
+    """
+    POST /api/scrape/
+    
+    Scrape news from configured sources
+    """
     try:
-        scraped_data = run_scraper()                 # returns dict {source: [items]}
-        saved_items = save_to_db(scraped_data)       # returns list of saved objects
+        scraped_data = run_scraper()
+        saved_items = save_to_db(scraped_data)
 
-        return Response(
-            {
-                "message": "Scraping completed successfully.",
-                "scraped_count": sum(len(v) for v in scraped_data.values()),
-                "saved_to_db": len(saved_items),
-            },
-            status=status.HTTP_200_OK,
-        )
+        return Response({
+            "message": "Scraping completed successfully.",
+            "scraped_count": sum(len(v) for v in scraped_data.values()),
+            "saved_to_db": len(saved_items),
+        }, status=status.HTTP_200_OK)
 
     except Exception as e:
-        return Response(
-            {"error": str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class AllNewsListAPIView(generics.ListAPIView):
-    queryset = NewsItem.objects.all().order_by('-created_at')
-    serializer_class = NewsItemSerializer
-    filter_backends = [SearchFilter, OrderingFilter]
-    search_fields = ['title', 'summary']
-    ordering_fields = ['created_at', 'priority']
 
-@api_view(['POST'])
+@api_view(['DELETE'])
 def delete_all_news(request):
+    """
+    POST /api/news/delete-all/
+    
+    Delete all news items and reset counter
+    """
     try:
         deleted_count, _ = NewsItem.objects.all().delete()
-        # 2. Reset SQLite autoincrement (PRIMARY KEY) to 1
         with connection.cursor() as cursor:
             cursor.execute("DELETE FROM sqlite_sequence WHERE name='core_newsitem';")
 
+        clear_content_cache()
 
         return Response({
             "message": "All news deleted successfully.",
@@ -79,51 +362,21 @@ def delete_all_news(request):
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
 def clean_old_news(request):
-    try:
-        days = request.data.get("days", 30)  # default: 30 days
-
-        cutoff_date = timezone.now() - timedelta(days=days)
-
-        deleted_count, _ = NewsItem.objects.filter(created_at__lt=cutoff_date).delete()
-
-        return Response({
-            "message": f"Old news deleted successfully.",
-            "deleted_items": deleted_count,
-            "retained_days": days
-        }, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-@api_view(['POST'])
-def clean_old_news(request):
-    try:
-        days = request.data.get("days", 30)  # default: 30 days
-
-        cutoff_date = timezone.now() - timedelta(days=days)
-
-        deleted_count, _ = NewsItem.objects.filter(created_at__lt=cutoff_date).delete()
-
-        return Response({
-            "message": f"Old news deleted successfully.",
-            "deleted_items": deleted_count,
-            "retained_days": days
-        }, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    """
+    POST /api/news/clean-old/
     
-@api_view(['POST'])
-def clean_old_news(request):
+    Body (optional): {"days": 30}
+    """
     try:
-        days = request.data.get("days", 30)  # default: 30 days
-
+        days = request.data.get("days", 30)
         cutoff_date = timezone.now() - timedelta(days=days)
-
         deleted_count, _ = NewsItem.objects.filter(created_at__lt=cutoff_date).delete()
 
         return Response({
@@ -133,24 +386,41 @@ def clean_old_news(request):
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(['POST'])
 def process_news_api(request):
     """
-    API endpoint to trigger news processing
     POST /api/process-news/
     
     Body (optional):
     {
-        "batch_size": 10,
-        "delay": 2
+        "batch_size": 20,
+        "parallel": true,
+        "max_workers": 4,
+        "high_priority_first": true
     }
     """
     try:
-        batch_size = request.data.get('batch_size', 10)
-        delay = request.data.get('delay', 2)
+        batch_size = request.data.get('batch_size', 20)
+        parallel = request.data.get('parallel', True)
+        max_workers = request.data.get('max_workers', 4)
+        high_priority = request.data.get('high_priority_first', True)
         
-        result = process_unprocessed_news(batch_size=batch_size, delay=delay)
+        if high_priority:
+            result = process_high_priority_first(
+                batch_size=batch_size,
+                max_workers=max_workers
+            )
+        else:
+            result = process_unprocessed_news(
+                batch_size=batch_size,
+                parallel=parallel,
+                max_workers=max_workers
+            )
         
         return Response({
             'success': True,
@@ -168,7 +438,6 @@ def process_news_api(request):
 @api_view(['POST'])
 def reprocess_news_api(request, pk):
     """
-    API endpoint to reprocess a specific news item
     POST /api/news/{id}/reprocess/
     """
     try:
@@ -203,14 +472,16 @@ def reprocess_news_api(request, pk):
 @api_view(['GET'])
 def processing_stats_api(request):
     """
-    Get statistics about news processing
     GET /api/processing-stats/
+    
+    Get comprehensive statistics about news processing
     """
     try:
         total = NewsItem.objects.count()
         processed = NewsItem.objects.filter(processed_by_llm=True).count()
         unprocessed = NewsItem.objects.filter(processed_by_llm=False).count()
         
+        # Risk breakdown
         risk_breakdown = {}
         for level in ['critical', 'high', 'medium', 'low']:
             risk_breakdown[level] = NewsItem.objects.filter(
@@ -218,16 +489,146 @@ def processing_stats_api(request):
                 risk_level=level
             ).count()
         
+        # Priority breakdown
+        priority_breakdown = {
+            'critical_priority': NewsItem.objects.filter(priority__gte=8).count(),
+            'high_priority': NewsItem.objects.filter(priority__gte=5, priority__lt=8).count(),
+            'medium_priority': NewsItem.objects.filter(priority__gte=3, priority__lt=5).count(),
+            'low_priority': NewsItem.objects.filter(priority__lt=3).count(),
+        }
+        
+        # Source breakdown (top 5)
+        from django.db.models import Count
+        top_sources = NewsItem.objects.values('source').annotate(
+            count=Count('id')
+        ).order_by('-count')[:5]
+        
         return Response({
             'total_news': total,
             'processed': processed,
             'unprocessed': unprocessed,
             'processing_rate': f"{(processed/total*100):.1f}%" if total > 0 else "0%",
-            'risk_breakdown': risk_breakdown
+            'risk_breakdown': risk_breakdown,
+            'priority_breakdown': priority_breakdown,
+            'top_sources': list(top_sources)
         }, status=status.HTTP_200_OK)
         
     except Exception as e:
         return Response({
             'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def scrape_and_process_api(request):
+    """
+    POST /api/scrape-and-process/
+    
+    Combined endpoint: Scrape news then immediately process them
+    
+    Body (optional):
+    {
+        "max_workers": 4,
+        "high_priority_first": true
+    }
+    """
+    try:
+        # Step 1: Scrape news
+        scraped_data = run_scraper()
+        saved_items = save_to_db(scraped_data)
+        
+        # Step 2: Process the scraped news
+        max_workers = request.data.get('max_workers', 4)
+        high_priority = request.data.get('high_priority_first', True)
+        
+        if high_priority:
+            process_result = process_high_priority_first(
+                batch_size=len(saved_items),
+                max_workers=max_workers
+            )
+        else:
+            process_result = process_unprocessed_news(
+                batch_size=len(saved_items),
+                parallel=True,
+                max_workers=max_workers
+            )
+        
+        return Response({
+            'success': True,
+            'message': 'Scraping and processing completed',
+            'scraping': {
+                'scraped_count': sum(len(v) for v in scraped_data.values()),
+                'saved_to_db': len(saved_items)
+            },
+            'processing': process_result
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def clear_cache_api(request):
+    """
+    POST /api/clear-cache/
+    
+    Clear the content extraction cache
+    """
+    try:
+        clear_content_cache()
+        return Response({
+            'success': True,
+            'message': 'Content cache cleared'
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def dashboard_summary(request):
+    """
+    GET /api/dashboard-summary/
+    
+    Get quick dashboard summary for frontend
+    """
+    try:
+        # Latest critical news
+        critical_news = NewsItem.objects.filter(
+            risk_level='critical',
+            processed_by_llm=True
+        ).order_by('-created_at')[:5]
+        
+        # Latest high priority news
+        high_priority = NewsItem.objects.filter(
+            priority__gte=5,
+            processed_by_llm=True
+        ).order_by('-created_at')[:10]
+        
+        # Recent unprocessed
+        unprocessed_count = NewsItem.objects.filter(processed_by_llm=False).count()
+        
+        # Today's news
+        today = timezone.now().date()
+        today_news = NewsItem.objects.filter(
+            created_at__date=today
+        ).count()
+        
+        return Response({
+            'critical_news': NewsItemSerializer(critical_news, many=True).data,
+            'high_priority_news': NewsItemSerializer(high_priority, many=True).data,
+            'unprocessed_count': unprocessed_count,
+            'today_news_count': today_news,
+            'last_updated': timezone.now()
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

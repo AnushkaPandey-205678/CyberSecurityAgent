@@ -1,5 +1,3 @@
-# core/ai_processor.py
-
 import requests
 import time
 from bs4 import BeautifulSoup
@@ -8,11 +6,14 @@ from django.utils import timezone
 from .models import NewsItem
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import lru_cache
+import hashlib
 
 logger = logging.getLogger(__name__)
 
-# Initialize Ollama client
-ollama_client = Client(host="http://localhost:11434")
+# Initialize Ollama client with timeout
+ollama_client = Client(host="http://localhost:11434", timeout=30)
 
 HEADERS = {
     "User-Agent": (
@@ -22,31 +23,39 @@ HEADERS = {
     "Accept-Language": "en-US,en;q=0.9",
 }
 
+# Content extraction cache to avoid re-fetching
+CONTENT_CACHE = {}
 
-def extract_article_content(url, max_retries=3):
+
+def extract_article_content(url, max_retries=2):
     """
-    Fetch and extract main content from article URL
+    Fetch and extract main content from article URL - OPTIMIZED
     """
+    # Check cache first
+    url_hash = hashlib.md5(url.encode()).hexdigest()
+    if url_hash in CONTENT_CACHE:
+        return CONTENT_CACHE[url_hash]
+    
     for attempt in range(max_retries):
         try:
-            response = requests.get(url, headers=HEADERS, timeout=15)
+            # Reduced timeout for faster failure
+            response = requests.get(url, headers=HEADERS, timeout=8)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            # Remove unwanted elements
-            for tag in soup(['script', 'style', 'nav', 'header', 'footer', 'aside', 'iframe']):
+            # Remove unwanted elements - optimized selector
+            for tag in soup(['script', 'style', 'nav', 'header', 'footer', 'aside', 'iframe', 'form', 'button']):
                 tag.decompose()
             
-            # Try multiple content selectors
+            # Priority-ordered content selectors (most specific first)
             content_selectors = [
                 'article',
                 '.article-content',
                 '.post-content',
                 '.entry-content',
-                '.content',
                 'main',
-                '[role="main"]',
+                '.content',
             ]
             
             content = None
@@ -54,28 +63,37 @@ def extract_article_content(url, max_retries=3):
                 element = soup.select_one(selector)
                 if element:
                     content = element.get_text(separator=' ', strip=True)
-                    break
+                    if len(content) > 200:  # Valid content threshold
+                        break
             
             # Fallback: get all paragraphs
             if not content or len(content) < 200:
                 paragraphs = soup.find_all('p')
-                content = ' '.join([p.get_text(strip=True) for p in paragraphs])
+                content = ' '.join([p.get_text(strip=True) for p in paragraphs if len(p.get_text(strip=True)) > 50])
             
-            # Clean and truncate content (Ollama has token limits)
-            content = ' '.join(content.split())  # Remove extra whitespace
+            # Clean and truncate content
+            content = ' '.join(content.split())
             
-            # Limit to approximately 3000 words for better processing
+            # Reduced word limit for faster processing (1500 words ~ 2000 tokens)
             words = content.split()
-            if len(words) > 3000:
-                content = ' '.join(words[:3000]) + '...'
+            if len(words) > 1500:
+                content = ' '.join(words[:1500])
             
-            return content if content else None
+            # Cache the result
+            if content and len(content) > 100:
+                CONTENT_CACHE[url_hash] = content
+                return content
             
-        except requests.exceptions.RequestException as e:
-            logger.warning(f"Attempt {attempt + 1} failed for {url}: {e}")
+            return None
+            
+        except requests.exceptions.Timeout:
+            logger.warning(f"Timeout for {url} on attempt {attempt + 1}")
             if attempt < max_retries - 1:
-                time.sleep(2 ** attempt)  # Exponential backoff
+                time.sleep(1)
             continue
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Request failed for {url}: {e}")
+            return None
         except Exception as e:
             logger.error(f"Error extracting content from {url}: {e}")
             return None
@@ -85,40 +103,31 @@ def extract_article_content(url, max_retries=3):
 
 def generate_ai_summary_with_ollama(title, content, url):
     """
-    Generate AI summary and risk assessment using Ollama
+    Generate AI summary and risk assessment using Ollama - OPTIMIZED
     """
     try:
-        # Create a focused prompt for cybersecurity analysis
-        prompt = f"""You are a cybersecurity expert analyst. Analyze this cybersecurity news article and provide a comprehensive assessment.
+        # Shortened, more focused prompt for faster processing
+        prompt = f"""Analyze this cybersecurity news and respond with ONLY valid JSON:
 
 Title: {title}
-URL: {url}
-Content: {content[:5000]}...
+Content: {content[:2500]}
 
-Please provide:
-1. A clear, concise summary (3-5 sentences) highlighting the key cybersecurity implications
-2. Risk assessment (Critical/High/Medium/Low) based on:
-   - Potential impact on organizations
-   - Severity of vulnerabilities or threats
-   - Scope of affected systems
-3. Risk score (1-10 scale)
-4. Detailed reasoning for the risk assessment (2-3 sentences)
+Provide:
+1. Summary (2-3 sentences max)
+2. Risk level: critical/high/medium/low
+3. Risk score: 1-10
+4. Risk reason (1-2 sentences)
 
-Respond ONLY with valid JSON in this exact format:
-{{
-  "ai_summary": "Your detailed summary here",
-  "risk_level": "high",
-  "risk_score": 8,
-  "risk_reason": "Your reasoning here"
-}}"""
+JSON format:
+{{"ai_summary": "...", "risk_level": "...", "risk_score": X, "risk_reason": "..."}}"""
 
-        # Call Ollama API
+        # Optimized Ollama parameters
         response = ollama_client.chat(
-            model="llama3",  # or "llama3.1", "mistral", etc.
+            model="llama3",  # Use llama3.2 or mistral for faster inference if available
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a cybersecurity expert. Always respond with valid JSON only."
+                    "content": "You are a cybersecurity analyst. Respond with ONLY JSON, no markdown."
                 },
                 {
                     "role": "user",
@@ -126,162 +135,228 @@ Respond ONLY with valid JSON in this exact format:
                 }
             ],
             options={
-                "temperature": 0.3,  # Lower temperature for more focused responses
-                "num_predict": 500,  # Limit response length
+                "temperature": 0.2,  # Lower for faster, more deterministic responses
+                "num_predict": 300,  # Reduced token limit
+                "top_p": 0.9,
+                "top_k": 40,
+                "num_ctx": 2048,  # Reduced context window
             }
         )
         
-        # Extract response content
+        # Extract and clean response
         response_text = response['message']['content'].strip()
         
-        # Try to extract JSON from response
-        # Sometimes LLMs add markdown code blocks
+        # Remove markdown code blocks if present
         if '```json' in response_text:
             response_text = response_text.split('```json')[1].split('```')[0].strip()
         elif '```' in response_text:
             response_text = response_text.split('```')[1].split('```')[0].strip()
         
-        # Parse JSON response
+        # Find JSON object in response
+        start_idx = response_text.find('{')
+        end_idx = response_text.rfind('}') + 1
+        if start_idx != -1 and end_idx > start_idx:
+            response_text = response_text[start_idx:end_idx]
+        
+        # Parse JSON
         result = json.loads(response_text)
         
-        # Validate and normalize risk_level
+        # Validate and normalize
         risk_level = result.get('risk_level', 'low').lower()
         if risk_level not in ['critical', 'high', 'medium', 'low']:
-            risk_level = 'low'
+            risk_level = 'medium'  # Default to medium instead of low
         
-        # Validate risk_score
-        risk_score = int(result.get('risk_score', 1))
-        if risk_score < 1:
-            risk_score = 1
-        elif risk_score > 10:
-            risk_score = 10
+        risk_score = min(10, max(1, int(result.get('risk_score', 5))))
         
         return {
-            'ai_summary': result.get('ai_summary', 'Summary generation failed.'),
+            'ai_summary': result.get('ai_summary', f'Analysis of {title}')[:1000],
             'risk_level': risk_level,
             'risk_score': risk_score,
-            'risk_reason': result.get('risk_reason', 'No reasoning provided.')
+            'risk_reason': result.get('risk_reason', 'Automated assessment')[:500]
         }
         
     except json.JSONDecodeError as e:
-        logger.error(f"JSON parsing error: {e}\nResponse: {response_text}")
-        return {
-            'ai_summary': f"Analysis for: {title}. Content extraction successful but structured analysis failed.",
-            'risk_level': 'low',
-            'risk_score': 1,
-            'risk_reason': 'Automated analysis incomplete.'
-        }
+        logger.error(f"JSON parse error: {e}")
+        # Fallback with basic keyword analysis
+        return generate_fallback_analysis(title, content)
     except Exception as e:
-        logger.error(f"Error generating summary with Ollama: {e}")
-        return {
-            'ai_summary': f"Failed to generate AI summary for: {title}",
-            'risk_level': 'low',
-            'risk_score': 1,
-            'risk_reason': f'Processing error: {str(e)}'
-        }
+        logger.error(f"Ollama error: {e}")
+        return generate_fallback_analysis(title, content)
+
+
+def generate_fallback_analysis(title, content):
+    """
+    Fast keyword-based fallback analysis when AI fails
+    """
+    text = (title + " " + content).lower()
+    
+    # Quick keyword-based risk assessment
+    critical_keywords = ['zero-day', 'critical vulnerability', 'ransomware attack', 'data breach', 'widespread']
+    high_keywords = ['vulnerability', 'exploit', 'malware', 'breach', 'attack', 'compromised']
+    medium_keywords = ['patch', 'update', 'security', 'threat', 'warning']
+    
+    if any(kw in text for kw in critical_keywords):
+        risk_level, risk_score = 'critical', 9
+    elif any(kw in text for kw in high_keywords):
+        risk_level, risk_score = 'high', 7
+    elif any(kw in text for kw in medium_keywords):
+        risk_level, risk_score = 'medium', 5
+    else:
+        risk_level, risk_score = 'low', 3
+    
+    return {
+        'ai_summary': f"Cybersecurity news: {title}. AI analysis temporarily unavailable.",
+        'risk_level': risk_level,
+        'risk_score': risk_score,
+        'risk_reason': f'Keyword-based assessment: {risk_level} priority security news.'
+    }
 
 
 def process_single_news_item(news_item):
     """
-    Process a single news item: fetch content, generate summary, update DB
+    Process a single news item - STREAMLINED
     """
     try:
-        logger.info(f"Processing news item {news_item.id}: {news_item.title}")
-        
         # Skip if already processed
         if news_item.processed_by_llm:
-            logger.info(f"News item {news_item.id} already processed. Skipping.")
-            return False
+            return {'success': False, 'reason': 'already_processed'}
         
         # Skip if no URL
         if not news_item.url:
-            logger.warning(f"News item {news_item.id} has no URL. Skipping.")
             news_item.processed_by_llm = True
-            news_item.ai_summary = "No URL available for content extraction."
+            news_item.ai_summary = "No URL available."
             news_item.save()
-            return False
+            return {'success': False, 'reason': 'no_url'}
         
-        # Extract article content
-        logger.info(f"Extracting content from: {news_item.url}")
+        # Extract content
         content = extract_article_content(news_item.url)
         
-        if not content:
-            logger.warning(f"Failed to extract content from {news_item.url}")
-            news_item.processed_by_llm = True
-            news_item.ai_summary = "Content extraction failed for this article."
-            news_item.content = ""
-            news_item.save()
-            return False
+        if not content or len(content) < 100:
+            # Use title/summary as fallback
+            content = f"{news_item.title}. {news_item.summary}"
+            logger.warning(f"Using title/summary fallback for {news_item.id}")
         
-        # Store extracted content
-        news_item.content = content[:5000]  # Limit stored content size
+        news_item.content = content[:2000]  # Reduced storage
         
-        # Generate AI summary using Ollama
-        logger.info(f"Generating AI summary for news item {news_item.id}")
+        # Generate AI analysis
         ai_result = generate_ai_summary_with_ollama(
             news_item.title,
             content,
             news_item.url
         )
         
-        # Update news item with AI analysis
+        # Update database
         news_item.ai_summary = ai_result['ai_summary']
         news_item.risk_level = ai_result['risk_level']
         news_item.risk_score = ai_result['risk_score']
         news_item.risk_reason = ai_result['risk_reason']
         news_item.processed_by_llm = True
         news_item.processed_at = timezone.now()
-        
         news_item.save()
         
-        logger.info(f"Successfully processed news item {news_item.id}")
-        return True
+        logger.info(f"✓ Processed {news_item.id}: {news_item.title[:50]}...")
+        return {'success': True, 'id': news_item.id}
         
     except Exception as e:
-        logger.error(f"Error processing news item {news_item.id}: {e}")
-        news_item.ai_summary = f"Processing error: {str(e)}"
+        logger.error(f"Error processing {news_item.id}: {e}")
+        news_item.ai_summary = "Processing error occurred."
         news_item.processed_by_llm = True
         news_item.save()
-        return False
+        return {'success': False, 'reason': str(e)}
 
 
-def process_unprocessed_news(batch_size=10, delay=2):
+def process_unprocessed_news(batch_size=10, delay=0.5, parallel=True, max_workers=4):
     """
-    Process all unprocessed news items in batches
+    Process unprocessed news items - PARALLEL PROCESSING
     
     Args:
-        batch_size: Number of items to process in one run
-        delay: Delay between processing items (seconds)
+        batch_size: Number of items to process
+        delay: Delay between batches (not per item)
+        parallel: Use parallel processing
+        max_workers: Number of parallel workers
     """
     unprocessed = NewsItem.objects.filter(processed_by_llm=False)[:batch_size]
+    total = len(unprocessed)
     
-    total = unprocessed.count()
-    processed = 0
-    failed = 0
+    if total == 0:
+        logger.info("No unprocessed news items found")
+        return {'total': 0, 'processed': 0, 'failed': 0, 'skipped': 0}
     
-    logger.info(f"Starting processing of {total} unprocessed news items")
+    logger.info(f"Processing {total} news items (parallel={parallel}, workers={max_workers})")
     
-    for idx, news_item in enumerate(unprocessed, 1):
-        logger.info(f"Processing item {idx}/{total}")
-        
-        success = process_single_news_item(news_item)
-        
-        if success:
-            processed += 1
-        else:
-            failed += 1
-        
-        # Add delay between requests to be respectful
-        if idx < total:
+    results = {
+        'total': total,
+        'processed': 0,
+        'failed': 0,
+        'skipped': 0
+    }
+    
+    start_time = time.time()
+    
+    if parallel and total > 1:
+        # PARALLEL PROCESSING for significant speedup
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_item = {
+                executor.submit(process_single_news_item, item): item 
+                for item in unprocessed
+            }
+            
+            for future in as_completed(future_to_item):
+                result = future.result()
+                if result['success']:
+                    results['processed'] += 1
+                elif result.get('reason') in ['already_processed', 'no_url']:
+                    results['skipped'] += 1
+                else:
+                    results['failed'] += 1
+    else:
+        # SEQUENTIAL PROCESSING (fallback)
+        for item in unprocessed:
+            result = process_single_news_item(item)
+            if result['success']:
+                results['processed'] += 1
+            elif result.get('reason') in ['already_processed', 'no_url']:
+                results['skipped'] += 1
+            else:
+                results['failed'] += 1
+            
             time.sleep(delay)
     
-    logger.info(f"Processing complete. Processed: {processed}, Failed: {failed}")
+    elapsed = time.time() - start_time
+    logger.info(
+        f"✅ Complete in {elapsed:.1f}s: "
+        f"{results['processed']} processed, "
+        f"{results['failed']} failed, "
+        f"{results['skipped']} skipped"
+    )
     
-    return {
-        'total': total,
-        'processed': processed,
-        'failed': failed
-    }
+    return results
+
+
+def process_high_priority_first(batch_size=20, max_workers=4):
+    """
+    Process high-priority news first (priority >= 5)
+    """
+    # Get high-priority unprocessed items first
+    high_priority = NewsItem.objects.filter(
+        processed_by_llm=False,
+        priority__gte=5
+    ).order_by('-priority', '-created_at')[:batch_size]
+    
+    if high_priority.exists():
+        logger.info(f"Processing {len(high_priority)} high-priority items first")
+        return process_unprocessed_news(
+            batch_size=len(high_priority),
+            parallel=True,
+            max_workers=max_workers
+        )
+    
+    # If no high-priority, process regular items
+    return process_unprocessed_news(
+        batch_size=batch_size,
+        parallel=True,
+        max_workers=max_workers
+    )
 
 
 def reprocess_news_item(news_id):
@@ -293,7 +368,33 @@ def reprocess_news_item(news_id):
         news_item.processed_by_llm = False
         news_item.save()
         
-        return process_single_news_item(news_item)
+        result = process_single_news_item(news_item)
+        return result['success']
     except NewsItem.DoesNotExist:
         logger.error(f"News item {news_id} not found")
         return False
+
+
+def batch_reprocess_by_risk(risk_level='low', limit=10):
+    """
+    Reprocess items of a specific risk level (useful for improving low-quality analyses)
+    """
+    items = NewsItem.objects.filter(
+        processed_by_llm=True,
+        risk_level=risk_level
+    )[:limit]
+    
+    for item in items:
+        item.processed_by_llm = False
+        item.save()
+    
+    return process_unprocessed_news(batch_size=limit, parallel=True)
+
+
+def clear_content_cache():
+    """
+    Clear the content extraction cache
+    """
+    global CONTENT_CACHE
+    CONTENT_CACHE.clear()
+    logger.info("Content cache cleared")

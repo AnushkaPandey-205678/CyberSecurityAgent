@@ -1,28 +1,34 @@
 # core/urls.py
 
 from django.urls import path
-from .views import (
-    ProcessedNewsListAPIView,
-    NewsDetailAPIView,
-    clean_old_news,
-    delete_all_news,
-    run_scraper_view,
-    AllNewsListAPIView,
-    process_news_api,
-    reprocess_news_api,
-    processing_stats_api,
-)
+from . import views
 
 urlpatterns = [
-    # Existing URLs
-    path('news/processed/', ProcessedNewsListAPIView.as_view(), name='processed-news-list'),
-    path('news/<int:id>/', NewsDetailAPIView.as_view(), name='news-detail'),
-    path('scrape/', run_scraper_view, name='run-scraper'),
-    path('news/all/', AllNewsListAPIView.as_view(), name='all-news-list'),
-       path("clean-old/", clean_old_news),
-    path("clean-all/", delete_all_news),
-    # New AI processing URLs
-    path('process-news/', process_news_api, name='process-news'),
-    path('news/<int:pk>/reprocess/', reprocess_news_api, name='reprocess-news'),
-    path('processing-stats/', processing_stats_api, name='processing-stats'),
+    # News List Views (with priority filtering)
+    path('news/processed/', views.processed_news_list, name='processed-news-list'),
+    path('news/all/', views.all_news_list, name='all-news-list'),
+    path('news/high-priority/', views.high_priority_news_list, name='high-priority-news'),
+    path('news/critical/', views.critical_news_list, name='critical-news'),
+    path('news/priority/<int:priority_level>/', views.news_by_priority, name='news-by-priority'),
+    
+    # Single News Item
+    path('news/<int:pk>/', views.news_detail, name='news-detail'),
+    path('news/<int:pk>/update-priority/', views.update_news_priority, name='update-news-priority'),
+    path('news/<int:pk>/reprocess/', views.reprocess_news_api, name='reprocess-news'),
+    
+    # Scraping
+    path('scrape/', views.run_scraper_view, name='run-scraper'),
+    path('scrape-and-process/', views.scrape_and_process_api, name='scrape-and-process'),
+    
+    # Processing
+    path('process-news/', views.process_news_api, name='process-news'),
+    
+    # Statistics & Dashboard
+    path('processing-stats/', views.processing_stats_api, name='processing-stats'),
+    path('dashboard-summary/', views.dashboard_summary, name='dashboard-summary'),
+    
+    # Maintenance
+    path('news/delete-all/', views.delete_all_news, name='delete-all-news'),
+    path('news/clean-old/', views.clean_old_news, name='clean-old-news'),
+    path('clear-cache/', views.clear_cache_api, name='clear-cache'),
 ]
