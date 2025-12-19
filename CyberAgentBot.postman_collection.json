@@ -1,0 +1,474 @@
+{
+	"info": {
+		"_postman_id": "3181a347-3103-413b-803c-c541c8c07bff",
+		"name": "CyberAgentBot",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32285384"
+	},
+	"item": [
+		{
+			"name": "News List",
+			"item": [
+				{
+					"name": "get all news",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Base_URL}}core/news/all/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"news",
+								"all",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "news-processed",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Base_URL}}core/news/processed/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"news",
+								"processed",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "high-priority news",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Base_URL}}core/news/high-priority/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"news",
+								"high-priority",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "critical-news",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Base_URL}}core/news/all/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"news",
+								"all",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "new-with-priority-level",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{Base_URL}}core/news/all/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"news",
+								"all",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "News",
+			"item": [
+				{
+					"name": "News in detail",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "update priority news",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \"priority\": 3 \n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Base_URL}}core/news/1/update-priority/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"news",
+								"1",
+								"update-priority",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "reprocess news",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n   \"priority\": 2 \n}"
+						},
+						"url": {
+							"raw": "{{Base_URL}}core/news/50/reprocess/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"news",
+								"50",
+								"reprocess",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Scrapping",
+			"item": [
+				{
+					"name": "scrapper apis",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{Base_URL}}core/scrape/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"scrape",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "scrape and process news",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{Base_URL}}core/scrape-and-process/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"scrape-and-process",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Processing",
+			"item": [
+				{
+					"name": "Process-news",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"batch_size\": 10,\n    \"delay\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Base_URL}}core/process-news/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"process-news",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Request",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Statistics",
+			"item": [
+				{
+					"name": "Processing Stats",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"batch_size\": 10,\n    \"delay\": 2\n}"
+						},
+						"url": {
+							"raw": "{{Base_URL}}core/processing-stats/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"processing-stats",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Dashboard-summary",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"batch_size\": 10,\n    \"delay\": 2\n}"
+						},
+						"url": {
+							"raw": "{{Base_URL}}core/dashboard-summary/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"dashboard-summary",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Maintenance",
+			"item": [
+				{
+					"name": "remove old news",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"batch_size\": 10,\n    \"delay\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Base_URL}}core/news/clean-old/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"news",
+								"clean-old",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "clear cache",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"batch_size\": 10,\n    \"delay\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Base_URL}}core/clear-cache/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"clear-cache",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete all news",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"batch_size\": 10,\n    \"delay\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{Base_URL}}core/news/delete-all/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"news",
+								"delete-all",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Agentic Ai APIs",
+			"item": [
+				{
+					"name": "Agentic Analysis",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"batch_size\": 10,\n    \"delay\": 2\n}"
+						},
+						"url": {
+							"raw": "{{Base_URL}}core/agentic-analysis/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"agentic-analysis",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Top 10 news",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"batch_size\": 10,\n    \"delay\": 2\n}"
+						},
+						"url": {
+							"raw": "{{Base_URL}}core/agent-top-10/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"agent-top-10",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Scrape and analyze using agentic ai",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"batch_size\": 10,\n    \"delay\": 2\n}"
+						},
+						"url": {
+							"raw": "{{Base_URL}}core/scrape-and-analyze/",
+							"host": [
+								"{{Base_URL}}core"
+							],
+							"path": [
+								"scrape-and-analyze",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

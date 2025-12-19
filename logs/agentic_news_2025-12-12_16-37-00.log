@@ -1,0 +1,148 @@
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+================================================================================
+🤖 AGENTIC AI NEWS ANALYSIS
+⏰ Time: 2025-12-12 11:07:00
+🔍 Analyzing last 24 hours
+🧠 Model: llama3
+================================================================================
+
+📰 Step 0: Scraping latest news...
+
+🔍 Starting scraper (last 24 hours, max 20 per site)...
+
+✓ https://krebsonsecurity.com: Found 20 articles (6 high-priority)
+✓ https://www.securityweek.com: Found 0 articles (0 high-priority)
+❌ Not allowed by robots.txt: https://www.zdnet.com/topic/security
+✓ https://thehackernews.com: Found 0 articles (0 high-priority)
+✓ https://www.csoonline.com: Found 0 articles (0 high-priority)
+✓ https://www.cyberscoop.com: Found 20 articles (0 high-priority)
+✓ https://www.bleepingcomputer.com: Found 0 articles (0 high-priority)
+❌ Error scraping https://www.darkreading.com: 403 Client Error: Forbidden for url: https://www.darkreading.com/
+✓ https://www.bankinfosecurity.com: Found 20 articles (3 high-priority)
+✓ https://www.schneier.com: Found 20 articles (0 high-priority)
+❌ Error scraping https://gbhackers.com: 403 Client Error: Forbidden for url: https://gbhackers.com/
+
+✅ Scraping complete!
+   Total articles: 80
+   High-priority: 9
+
+📊 Summary: 59 new articles saved, 21 duplicates skipped
+   ✓ Scraped and saved 59 new articles
+
+🤖 Running Agentic AI Analysis...
+
+================================================================================
+📊 ANALYSIS RESULTS
+================================================================================
+
+📈 Statistics:
+   Total articles analyzed: 20
+   Top priority selected: 10
+   Processing time: 311.3s
+
+🧠 Agent Reasoning:
+Top 10 by score. Patterns: 3x critical, 7x unknown
+
+🔍 Identified Patterns:
+   • 3x critical
+   • 7x unknown
+
+================================================================================
+🎯 TOP 10 MOST IMPORTANT NEWS
+================================================================================
+[1/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Cybersecurity Summit: Implications of AI | Virtual
+🔗 https://www.bankinfosecurity.com/events/cybersecurity-summit-implications-ai-virtual-e-472
+
+📝 Executive Summary:
+   Cybersecurity Summit: Implications of AI | Virtual. Requires review.
+
+[2/10] 🟠 HIGH (Score: 7/10)
+--------------------------------------------------------------------------------
+📰 Exploit Attempts Surge for React2Shell
+🔗 https://www.bankinfosecurity.com/exploit-attempts-surge-for-react2shell-a-30219
+
+📝 Executive Summary:
+   Exploit Attempts Surge for React2Shell. Requires review.
+
+[3/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 AI vs. Human Drivers
+🔗 https://www.schneier.com/blog/archives/2025/12/ai-vs-human-drivers.html
+
+📝 Executive Summary:
+   AI vs. Human Drivers. Requires review.
+
+[4/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Ransomware Victim Warning: The Streisand Effect May Apply
+🔗 https://www.bankinfosecurity.com/ransomware-victim-warning-streisand-effect-may-apply-a-30247
+
+📝 Executive Summary:
+   Ransomware Victim Warning: The Streisand Effect May Apply. Requires review.
+
+[5/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Banning VPNs
+🔗 https://www.schneier.com/blog/archives/2025/12/banning-vpns.html
+
+📝 Executive Summary:
+   Banning VPNs. Requires review.
+
+[6/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 FBI Warns of Fake Video Scams
+🔗 https://www.schneier.com/blog/archives/2025/12/fbi-warns-of-fake-video-scams.html
+
+📝 Executive Summary:
+   FBI Warns of Fake Video Scams. Requires review.
+
+[7/10] 🟠 HIGH (Score: 7/10)
+--------------------------------------------------------------------------------
+📰 Marketing and Compliance Software Vendor to Banks Breached
+🔗 https://www.bankinfosecurity.com/marketing-compliance-software-vendor-to-banks-breached-a-30184
+
+📝 Executive Summary:
+   Marketing and Compliance Software Vendor to Banks Breached. Requires
+   review.
+
+[8/10] 🟠 HIGH (Score: 7/10)
+--------------------------------------------------------------------------------
+📰 Experience Really Matters - But Now You're Fighting AI Hacks
+🔗 https://www.bankinfosecurity.com/blogs/experience-really-matters-but-now-youre-fighting-ai-hacks-p-3996
+
+📝 Executive Summary:
+   Experience Really Matters - But Now You're Fighting AI Hacks. Requires
+   review.
+
+[9/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Friday Squid Blogging: Flying Neon Squid Found on Israeli Beach
+🔗 https://www.schneier.com/blog/archives/2025/11/friday-squid-blogging-flying-neon-squid-found-on-israeli-beach.html
+
+📝 Executive Summary:
+   Friday Squid Blogging: Flying Neon Squid Found on Israeli Beach. Requires
+   review.
+
+[10/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Friday Squid Blogging: Vampire Squid Genome
+🔗 https://www.schneier.com/blog/archives/2025/12/friday-squid-blogging-vampire-squid-genome.html
+
+📝 Executive Summary:
+   Friday Squid Blogging: Vampire Squid Genome. Requires review.
+

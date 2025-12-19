@@ -2,14 +2,21 @@ from django.db import models
 
 
 class NewsItem(models.Model):
-    title = models.CharField(max_length=255)
-    summary = models.TextField()  # original extracted summary
-    content = models.TextField(blank=True)
+  
     source = models.CharField(max_length=255)
     url = models.URLField(max_length=500, blank=True, null=True)
-
+    title = models.CharField(max_length=500)
+    summary = models.TextField()  # Short excerpt from scraping
+    content = models.TextField(blank=True)  # Full article content
+    ai_summary = models.TextField(null=True, blank=True)  # Your 500+ word summary
+    url = models.TextField(null=True, blank=True)
+    priority = models.IntegerField(default=1)
+    # Add these fields for content tracking
+    content_length = models.IntegerField(default=0)
+    summary_length = models.IntegerField(default=0)
+    word_count = models.IntegerField(default=0)
+    reading_time_minutes = models.IntegerField(default=0)
     # ---- LLM PROCESSING FIELDS -----
-    ai_summary = models.TextField(null=True, blank=True)
     risk_level = models.CharField(
         max_length=20,
         choices=[
@@ -20,7 +27,7 @@ class NewsItem(models.Model):
         ],
         default='low'
     )
-    risk_score = models.IntegerField(default=1)  # 1 to 10
+    risk_score = models.IntegerField(default=5)  # 1 to 10
     risk_reason = models.TextField(null=True, blank=True)
 
     processed_by_llm = models.BooleanField(default=False)
@@ -30,6 +37,6 @@ class NewsItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.title
+        return self.title[:100]
 
 

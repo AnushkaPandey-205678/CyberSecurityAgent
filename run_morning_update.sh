@@ -6,8 +6,17 @@ source /home/anushka/Cyberagent/myenv/bin/activate
 # Navigate to project directory
 cd /home/anushka/Cyberagent
 
-# Run the management command
-python manage.py process_news --workers 1 --batch-size 100 --clean-days 1
+# Log file with timestamp
+LOG_FILE="/home/anushka/Cyberagent/logs/agentic_news_$(date +'%Y-%m-%d_%H-%M-%S').log"
 
-# Optional: Send notification (if you have mail configured)
-# echo "Morning news update completed at $(date)" | mail -s "News Update Complete" your@email.com
+# Make sure logs directory exists
+mkdir -p /home/anushka/Cyberagent/logs
+
+# Run command, show output, and save it to log file
+python manage.py agentic_news_update --scrape-first --show-reasoning 2>&1 | tee "$LOG_FILE"
+
+echo "News update completed at $(date)"
+echo "Log saved to: $LOG_FILE"
+
+# # Optional email notification with results
+# mail -s "Agentic News Update Report $(date)" you@email.com < "$LOG_FILE"

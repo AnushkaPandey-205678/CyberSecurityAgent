@@ -113,10 +113,10 @@ Title: {title}
 Content: {content[:2500]}
 
 Provide:
-1. Summary (2-3 sentences max)
+1. Summary (9-10 sentences max)
 2. Risk level: critical/high/medium/low
 3. Risk score: 1-10
-4. Risk reason (1-2 sentences)
+4. Risk reason (4-5 sentences)
 
 JSON format:
 {{"ai_summary": "...", "risk_level": "...", "risk_score": X, "risk_reason": "..."}}"""

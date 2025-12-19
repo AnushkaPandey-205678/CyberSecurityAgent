@@ -1,0 +1,150 @@
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+================================================================================
+🤖 AGENTIC AI NEWS ANALYSIS
+⏰ Time: 2025-12-18 06:30:01
+🔍 Analyzing last 24 hours
+🧠 Model: llama3
+================================================================================
+
+📰 Step 0: Scraping latest news...
+
+🔍 Starting scraper (last 24 hours, max 20 per site)...
+
+✓ https://krebsonsecurity.com: Found 20 articles (6 high-priority)
+✓ https://thehackernews.com: Found 0 articles (0 high-priority)
+✓ https://www.securityweek.com: Found 0 articles (0 high-priority)
+❌ Not allowed by robots.txt: https://www.zdnet.com/topic/security
+✓ https://www.csoonline.com: Found 1 articles (0 high-priority)
+✓ https://www.cyberscoop.com: Found 20 articles (0 high-priority)
+✓ https://www.bankinfosecurity.com: Found 20 articles (0 high-priority)
+✓ https://www.bleepingcomputer.com: Found 0 articles (0 high-priority)
+❌ Error scraping https://www.darkreading.com: 403 Client Error: Forbidden for url: https://www.darkreading.com/
+✓ https://www.schneier.com: Found 20 articles (0 high-priority)
+❌ Error scraping https://gbhackers.com: ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))
+
+✅ Scraping complete!
+   Total articles: 81
+   High-priority: 6
+
+📊 Summary: 13 new articles saved, 68 duplicates skipped
+   ✓ Scraped and saved 13 new articles
+
+🤖 Running Agentic AI Analysis...
+
+================================================================================
+📊 ANALYSIS RESULTS
+================================================================================
+
+📈 Statistics:
+   Total articles analyzed: 20
+   Top priority selected: 10
+   Processing time: 332.7s
+
+🧠 Agent Reasoning:
+Top 10 by score. Patterns: 2x critical, 8x unknown
+
+🔍 Identified Patterns:
+   • 2x critical
+   • 8x unknown
+
+================================================================================
+🎯 TOP 10 MOST IMPORTANT NEWS
+================================================================================
+[1/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Cyderes Bets on Lucidum to Drive AI-Backed Identity Security
+🔗 https://www.bankinfosecurity.com/cyderes-bets-on-lucidum-to-drive-ai-backed-identity-security-a-30294
+
+📝 Executive Summary:
+   Cyderes Bets on Lucidum to Drive AI-Backed Identity Security. Requires
+   review.
+
+[2/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Why AI Security Starts With Network Transformation
+🔗 https://www.bankinfosecurity.com/ai-security-starts-network-transformation-a-30269
+
+📝 Executive Summary:
+   Why AI Security Starts With Network Transformation. Requires review.
+
+[3/10] 🟠 HIGH (Score: 7/10)
+--------------------------------------------------------------------------------
+📰 Chinese Hackers Hijack European Networks for Espionage
+🔗 https://www.bankinfosecurity.com/chinese-hackers-hijack-european-networks-for-espionage-a-30319
+
+📝 Executive Summary:
+   Chinese Hackers Hijack European Networks for Espionage. Requires review.
+
+[4/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 5 Cybersecurity Moves Every SMB Should Make
+🔗 https://www.bankinfosecurity.com/5-cybersecurity-moves-every-smb-should-make-a-30313
+
+📝 Executive Summary:
+   5 Cybersecurity Moves Every SMB Should Make. Requires review.
+
+[5/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Spotlight: Making the most of multicloud
+🔗 https://www.csoonline.com/in/cloud-security/
+
+📝 Executive Summary:
+   Spotlight: Making the most of multicloud. Requires review.
+
+[6/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Deliberate Internet Shutdowns
+🔗 https://www.schneier.com/blog/archives/2025/12/deliberate-internet-shutdowns.html
+
+📝 Executive Summary:
+   Deliberate Internet Shutdowns. Requires review.
+
+[7/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Agentic AI Reshapes Protection and Recovery
+🔗 https://www.bankinfosecurity.com/agentic-ai-reshapes-protection-recovery-a-30253
+
+📝 Executive Summary:
+   Agentic AI Reshapes Protection and Recovery. Requires review.
+
+[8/10] 🟠 HIGH (Score: 7/10)
+--------------------------------------------------------------------------------
+📰 Illusory Systems settles with FTC over 2022 cryptocurrency hack
+🔗 https://cyberscoop.com/ftc-settles-with-illusory-systems-in-2022-cryptocurrency-hack/
+
+📝 Executive Summary:
+   Illusory Systems settles with FTC over 2022 cryptocurrency hack. Requires
+   review.
+
+[9/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 AI Is Raising the Expectations for Entry-Level Engineers
+🔗 https://www.bankinfosecurity.com/ai-raising-expectations-for-entry-level-engineers-a-30252
+
+📝 Executive Summary:
+   AI Is Raising the Expectations for Entry-Level Engineers. Requires review.
+
+[10/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 'I Quit!' - When CISOs Need to Take Charge of Their Careers
+🔗 https://www.bankinfosecurity.com/blogs/i-quit-when-cisos-need-to-take-charge-their-careers-p-4002
+
+📝 Executive Summary:
+   'I Quit!' - When CISOs Need to Take Charge of Their Careers. Requires
+   review.
+

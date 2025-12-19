@@ -31,4 +31,10 @@ urlpatterns = [
     path('news/delete-all/', views.delete_all_news, name='delete-all-news'),
     path('news/clean-old/', views.clean_old_news, name='clean-old-news'),
     path('clear-cache/', views.clear_cache_api, name='clear-cache'),
+    
+    # Agentic AI endpoints
+    path('agentic-analysis/', views.run_agentic_analysis_api, name='agentic_analysis'),
+    path('agent-top-10/', views.get_agent_top_10_api, name='agent_top_10'),
+    path('scrape-and-analyze/', views.scrape_and_agentic_analysis_api, name='scrape_and_analyze'),
+    
 ]

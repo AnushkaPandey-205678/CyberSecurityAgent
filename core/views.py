@@ -6,7 +6,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db import connection
 from django.db.models import Q
-
+from rest_framework.decorators import api_view, parser_classes
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from .models import NewsItem
 from .serializers import NewsItemSerializer
 from .ai_processor import (
@@ -16,7 +17,9 @@ from .ai_processor import (
     clear_content_cache
 )
 from .scraper import run_scraper, save_to_db
-
+from .agentic_processor import run_agentic_news_analysis, get_agent_top_10
+import logging
+logger = logging.getLogger(__name__)
 
 # Custom pagination
 class NewsItemPagination(PageNumberPagination):
@@ -632,3 +635,158 @@ def dashboard_summary(request):
         return Response({
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+@api_view(['POST'])
+@parser_classes([JSONParser, FormParser, MultiPartParser])  # Accept multiple content types
+def scrape_and_agentic_analysis_api(request):
+    """
+    POST /api/scrape-and-analyze/
+    
+    Complete workflow:
+    1. Scrape latest news from all sources
+    2. Run agentic AI analysis to find top 10 most important
+    
+    Body (optional):
+    {
+        "hours": 24,
+        "model": "llama3"
+    }
+    
+    Or send as form data or empty POST
+    """
+    try:
+        # Handle different content types
+        if request.content_type and 'application/json' in request.content_type:
+            hours = request.data.get('hours', 24)
+            model = request.data.get('model', 'llama3')
+        else:
+            # Fallback for form data or empty requests
+            hours = int(request.POST.get('hours', 24))
+            model = request.POST.get('model', 'llama3')
+        
+        logger.info(f"Starting scrape and analyze: hours={hours}, model={model}")
+        
+        # Step 1: Scrape
+        from .scraper import run_scraper, save_to_db
+        logger.info("Step 1: Scraping news...")
+        scraped_data = run_scraper()
+        saved_items = save_to_db(scraped_data)
+        
+        scrape_count = len(saved_items)
+        total_scraped = sum(len(v) for v in scraped_data.values())
+        logger.info(f"Scraped {total_scraped} articles, saved {scrape_count} new ones")
+        
+        # If no new items, still analyze existing items from last X hours
+        if scrape_count == 0:
+            logger.warning("No new articles scraped (all duplicates), analyzing existing articles...")
+        
+        # Step 2: Agentic Analysis
+        from .agentic_processor import run_agentic_news_analysis
+        logger.info("Step 2: Running agentic AI analysis...")
+        
+        analysis_result = run_agentic_news_analysis(hours=hours, model=model)
+        
+        return Response({
+            'success': True,
+            'message': 'Scraping and agentic analysis completed',
+            'scraping': {
+                'total_found': total_scraped,
+                'new_saved': scrape_count,
+                'duplicates_skipped': total_scraped - scrape_count
+            },
+            'agentic_analysis': analysis_result
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.exception("Scrape and analyze failed")
+        return Response({
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@parser_classes([JSONParser, FormParser, MultiPartParser])
+def run_agentic_analysis_api(request):
+    """
+    POST /api/agentic-analysis/
+    
+    Run autonomous AI agent to analyze and prioritize news
+    Handles JSON, form data, or empty POST
+    """
+    try:
+        # Handle different content types
+        if request.content_type and 'application/json' in request.content_type:
+            hours = request.data.get('hours', 24)
+            model = request.data.get('model', 'llama3')
+        else:
+            hours = int(request.POST.get('hours', 24))
+            model = request.POST.get('model', 'llama3')
+        
+        logger.info(f"Running agentic analysis: hours={hours}, model={model}")
+        
+        from .agentic_processor import run_agentic_news_analysis
+        result = run_agentic_news_analysis(hours=hours, model=model)
+        
+        return Response({
+            'success': True,
+            'message': 'Agentic analysis completed',
+            'result': result
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.exception("Agentic analysis failed")
+        return Response({
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_agent_top_10_api(request):
+    """
+    GET /api/agent-top-10/
+    
+    Get the top 10 news items identified by the agentic AI
+    """
+    try:
+        from .agentic_processor import get_agent_top_10
+        top_10 = get_agent_top_10()
+        
+        results = []
+        for item in top_10:
+            try:
+                risk_details = json.loads(item.risk_reason) if item.risk_reason else {}
+            except:
+                risk_details = {'raw': item.risk_reason}
+            
+            results.append({
+                'id': item.id,
+                'title': item.title,
+                'source': item.source,
+                'url': item.url,
+                'executive_summary': item.ai_summary,
+                'risk_level': item.risk_level,
+                'risk_score': item.risk_score,
+                'priority': item.priority,
+                'details': risk_details,
+                'created_at': item.created_at,
+                'processed_at': item.processed_at
+            })
+        
+        return Response({
+            'success': True,
+            'count': len(results),
+            'top_10': results
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.exception("Failed to get agent top 10")
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
