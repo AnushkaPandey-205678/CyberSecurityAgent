@@ -35,6 +35,7 @@ class NewsItem(models.Model):
 
     priority = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
+    published_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.title[:100]
