@@ -1,0 +1,80 @@
+============================================================
+🤖 COMPREHENSIVE AGENTIC NEWS ANALYSIS
+============================================================
+⏰ Started at: 2025-12-22 12:57:45
+💻 Operating System: Linux
+📁 Project Directory: /home/anushka/Cyberagent
+🐍 Python: 3.10.12
+🎯 Target: Top 10 news from last 24 hours
+⏱️  Note: Quality analysis - may take several minutes
+
+✅ Virtual environment found: /home/anushka/Cyberagent/myenv/bin/python
+
+🚀 Starting analysis...
+
+Traceback (most recent call last):
+  File "/home/anushka/Cyberagent/manage.py", line 22, in <module>
+    main()
+  File "/home/anushka/Cyberagent/manage.py", line 18, in main
+    execute_from_command_line(sys.argv)
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/core/management/__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/core/management/__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/core/management/base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/core/management/base.py", line 457, in execute
+    self.check(**check_kwargs)
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/core/management/base.py", line 492, in check
+    all_issues = checks.run_checks(
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/core/checks/registry.py", line 89, in run_checks
+    new_errors = check(app_configs=app_configs, databases=databases)
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/core/checks/urls.py", line 44, in check_url_namespaces_unique
+    all_namespaces = _load_all_namespaces(resolver)
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/core/checks/urls.py", line 63, in _load_all_namespaces
+    url_patterns = getattr(resolver, "url_patterns", [])
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/utils/functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/urls/resolvers.py", line 718, in url_patterns
+    patterns = getattr(self.urlconf_module, "urlpatterns", self.urlconf_module)
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/utils/functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/urls/resolvers.py", line 711, in urlconf_module
+    return import_module(self.urlconf_name)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/anushka/Cyberagent/cyberagent/urls.py", line 22, in <module>
+    path('core/', include('core.urls')),  # Include core app URLs
+  File "/home/anushka/Cyberagent/myenv/lib/python3.10/site-packages/django/urls/conf.py", line 39, in include
+    urlconf_module = import_module(urlconf_module)
+  File "/usr/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/anushka/Cyberagent/core/urls.py", line 4, in <module>
+    from . import views
+  File "/home/anushka/Cyberagent/core/views.py", line 20, in <module>
+    from .agentic_processor import run_agentic_news_analysis, get_agent_top_10
+ImportError: cannot import name 'get_agent_top_10' from 'core.agentic_processor' (/home/anushka/Cyberagent/core/agentic_processor.py)
+
+============================================================
+✅ ANALYSIS COMPLETE
+============================================================
+⏰ Completed at: 2025-12-22 12:57:46
+📄 Log saved to: /home/anushka/Cyberagent/logs/agentic_news_2025-12-22_12-57-45.log
+
+📊 Quick Summary:
+  - Timeframe: Last 24 hours
+  - Top items selected: 10
+  - Check log for detailed analysis
+

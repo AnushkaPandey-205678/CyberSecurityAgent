@@ -1,0 +1,151 @@
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+LLM call failed: timed out
+================================================================================
+🤖 AGENTIC AI NEWS ANALYSIS
+⏰ Time: 2025-12-22 06:59:11
+🔍 Analyzing last 24 hours
+🧠 Model: llama3
+================================================================================
+
+📰 Step 0: Scraping latest news...
+
+🔍 Starting scraper (last 24 hours, max 20 per site)...
+
+✓ https://krebsonsecurity.com: Found 20 articles (8 high-priority)
+✓ https://www.securityweek.com: Found 0 articles (0 high-priority)
+✓ https://thehackernews.com: Found 0 articles (0 high-priority)
+❌ Not allowed by robots.txt: https://www.zdnet.com/topic/security
+✓ https://www.bleepingcomputer.com: Found 0 articles (0 high-priority)
+✓ https://www.cyberscoop.com: Found 20 articles (0 high-priority)
+✓ https://www.csoonline.com: Found 1 articles (1 high-priority)
+❌ Error scraping https://www.darkreading.com: 403 Client Error: Forbidden for url: https://www.darkreading.com/
+✓ https://www.schneier.com: Found 20 articles (0 high-priority)
+✓ https://www.bankinfosecurity.com: Found 20 articles (0 high-priority)
+❌ Error scraping https://gbhackers.com: 403 Client Error: Forbidden for url: https://gbhackers.com/
+
+✅ Scraping complete!
+   Total articles: 81
+   High-priority: 9
+
+📊 Summary: 0 new articles saved, 81 duplicates skipped
+   ✓ Scraped and saved 0 new articles
+
+🤖 Running Agentic AI Analysis...
+
+================================================================================
+📊 ANALYSIS RESULTS
+================================================================================
+
+📈 Statistics:
+   Total articles analyzed: 20
+   Top priority selected: 10
+   Processing time: 347.3s
+
+🧠 Agent Reasoning:
+Top 10 by score. Patterns: 1x critical, 9x unknown
+
+🔍 Identified Patterns:
+   • 1x critical
+   • 9x unknown
+
+================================================================================
+🎯 TOP 10 MOST IMPORTANT NEWS
+================================================================================
+[1/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 The Access‑Trust Gap: Why security can’t see what work depends on
+🔗 https://cyberscoop.com/radio/dave-explains-how-this-gap-shows-up-in-everyday-ways/
+
+📝 Executive Summary:
+   The Access‑Trust Gap: Why security can’t see what work depends on. Requires
+   review.
+
+[2/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 How AI has complicated enterprise mobile security
+🔗 https://cyberscoop.com/radio/how-modern-phishing-attacks-use-scraped-social-media-data-to-craft-hyper-personalized-messages-that-are-nearly-impossible-for-humans-to-detect/
+
+📝 Executive Summary:
+   How AI has complicated enterprise mobile security. Requires review.
+
+[3/10] 🟠 HIGH (Score: 7/10)
+--------------------------------------------------------------------------------
+📰 Spotlight: Making the most of multicloud
+🔗 https://www.csoonline.com/in/cloud-security/
+
+📝 Executive Summary:
+   Spotlight: Making the most of multicloud. Requires review.
+
+[4/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Building Trustworthy AI Agents
+🔗 https://www.schneier.com/blog/archives/2025/12/building-trustworthy-ai-agents.html
+
+📝 Executive Summary:
+   Building Trustworthy AI Agents. Requires review.
+
+[5/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Want to scale cyber defenders? Focus on AI-enabled security and organization-wide training
+🔗 https://cyberscoop.com/want-to-scale-cyber-defenders-focus-on-ai-enabled-security-and-organization-wide-training/
+
+📝 Executive Summary:
+   Want to scale cyber defenders? Focus on AI-enabled security and
+   organization-wide training. Requires review.
+
+[6/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Deliberate Internet Shutdowns
+🔗 https://www.schneier.com/blog/archives/2025/12/deliberate-internet-shutdowns.html
+
+📝 Executive Summary:
+   Deliberate Internet Shutdowns. Requires review.
+
+[7/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Agencies push for digital transformation amid security challenges
+🔗 https://fedscoop.com/agencies-push-for-digital-transformation-amid-security-challenges/
+
+📝 Executive Summary:
+   Agencies push for digital transformation amid security challenges. Requires
+   review.
+
+[8/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Friday Squid Blogging: Giant Squid Eating a Diamondback Squid
+🔗 https://www.schneier.com/blog/archives/2025/12/friday-squid-blogging-giant-squid-eating-a-diamondback-squid.html
+
+📝 Executive Summary:
+   Friday Squid Blogging: Giant Squid Eating a Diamondback Squid. Requires
+   review.
+
+[9/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Someone Boarded a Plane at Heathrow Without a Ticket or Passport
+🔗 https://www.schneier.com/blog/archives/2025/12/someone-boarded-a-plane-at-heathrow-without-a-ticket-or-passport.html
+
+📝 Executive Summary:
+   Someone Boarded a Plane at Heathrow Without a Ticket or Passport. Requires
+   review.
+
+[10/10] 🟡 MEDIUM (Score: 5/10)
+--------------------------------------------------------------------------------
+📰 Friday Squid Blogging: Petting a Squid
+🔗 https://www.schneier.com/blog/archives/2025/12/friday-squid-blogging-petting-a-squid.html
+
+📝 Executive Summary:
+   Friday Squid Blogging: Petting a Squid. Requires review.
+

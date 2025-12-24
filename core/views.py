@@ -749,20 +749,30 @@ def run_agentic_analysis_api(request):
 def get_agent_top_10_api(request):
     """
     GET /api/agent-top-10/
-    
-    Get the top 10 news items identified by the agentic AI
+
+    Get the top 10 agentic AI news published within last 24 hours
     """
     try:
         from .agentic_processor import get_agent_top_10
+
+        # ⏱ 24 hour time window
+        last_24_hours = timezone.now() - timedelta(hours=24)
+
+        # get agent selected top items
         top_10 = get_agent_top_10()
-        
+
         results = []
         for item in top_10:
+
+            # ❗ Skip old news
+            if not item.published_date or item.published_date < last_24_hours:
+                continue
+
             try:
                 risk_details = json.loads(item.risk_reason) if item.risk_reason else {}
             except:
                 risk_details = {'raw': item.risk_reason}
-            
+
             results.append({
                 'id': item.id,
                 'title': item.title,
@@ -774,19 +784,19 @@ def get_agent_top_10_api(request):
                 'priority': item.priority,
                 'details': risk_details,
                 'created_at': item.created_at,
-                'processed_at': item.processed_at
+                'processed_at': item.processed_at,
+                'published_date': item.published_date,
             })
-        
+
         return Response({
             'success': True,
             'count': len(results),
             'top_10': results
         }, status=status.HTTP_200_OK)
-        
+
     except Exception as e:
         logger.exception("Failed to get agent top 10")
         return Response({
             'success': False,
             'error': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
